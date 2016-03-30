@@ -1,0 +1,385 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Bus App</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable = no">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <!-- Web clip icon for iPad 3+ with high-resolution Retina displays running iOS >= 7 -->
+    <link rel="apple-touch-icon" sizes="152x152" href="./images/icons/152x152.png">
+ 
+    <!-- Web clip icon for iPad 3+ with high-resolution Retina displays running iOS <= 6 -->
+    <link rel="apple-touch-icon" sizes="144x144" href="./images/icons/144x144.png">
+ 
+    <!-- Web clip icon for iPhone 4+ and iPod touch with high-resolution Retina displays running iOS >= 7 -->
+    <link rel="apple-touch-icon" sizes="120x120" href="./images/icons/120x120.png">
+ 
+    <!-- Web clip icon for iPhone 4+ and iPod touch with high-resolution Retina displays running iOS <= 6 -->
+    <link rel="apple-touch-icon" sizes="114x114" href="./images/icons/114x114.png">
+ 
+    <!-- Web clip icon for iPad mini and the first- and second-generation iPad with standard-resolution displays running iOS >= 7 -->
+    <link rel="apple-touch-icon" sizes="76x76" href="./images/icons/76x76.png">
+ 
+    <!-- Web clip icon for iPad mini and the first- and second-generation iPad with standard-resolution displays running iOS <= 6 -->
+    <link rel="apple-touch-icon" sizes="72x72" href="./images/icons/77x72.png">
+ 
+    <!-- Web clip icon for non-iOS devices that support Apple's touch icons (and if not Chrome 31+ for Android) -->
+    <link rel="apple-touch-icon" sizes="60x60" href="./images/icons/60x60.png">
+ 
+    <!-- Web clip icon for iPhone 1-3 and iPod touch with standard-resolution non-Retina displays running iOS <= 6 -->
+    <link rel="apple-touch-icon" sizes="57x57" href="./images/icons/57x57.png">
+ 
+    <!-- Web clip icon for iPad 1 with standard-resolution non-Retina displays -->
+    <link rel="apple-touch-icon" href="./images/icons/57x57.png">
+ 
+    <!-- Fallback web clip icon for all devices -->
+    <link rel="shortcut icon" href="./images/icons/57x57.png">
+    
+    
+    <!-- Bootstrap core CSS -->
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.5/css/bootstrap.min.css">
+    <link href="./css/vendor/jquery.bootstrap-touchspin.min.css" rel="stylesheet" media="screen">
+    <link href="./css/style.css" rel="stylesheet" media="screen">
+    <!-- HTML5 shim and Respond.js IE8 support of HTML5 elements and media queries -->
+    <!--[if lt IE 9]>
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/html5shiv/3.7.2/html5shiv.js"></script>
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/respond.js/1.4.2/respond.js"></script>
+    <![endif]-->
+    <script src="https://js.arcgis.com/3.16/"></script>
+    <script src="./js/main.js"></script>
+  </head>
+  <body role="document">
+    <audio controls preload="auto" class="hide" id="clickSound">
+    	<source src="audio/click.mp3" controls></source>
+    	<source src="audio/click.ogg" controls></source>
+    	Your browser isn't invited for super fun audio time.
+    </audio>
+    <audio controls preload="auto" class="hide" id="bellSound">
+    	<source src="audio/bell.mp3" controls></source>
+    	<source src="audio/bell.ogg" controls></source>
+    	Your browser isn't invited for super fun audio time.
+    </audio>
+    <audio controls preload="auto" class="hide" id="errorSound">
+    	<source src="audio/error.mp3" controls></source>
+    	<source src="audio/error.ogg" controls></source>
+    	Your browser isn't invited for super fun audio time.
+    </audio>
+    <form id="transitRidership">
+    <!-- Fixed navbar -->
+    <nav class="navbar navbar-inverse navbar-fixed-top">
+      <div class="container">
+        <div class="navbar-header">
+          <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#navbar" aria-expanded="false" aria-controls="navbar">
+            <span class="sr-only">Toggle navigation</span>
+            <span class="icon-bar"></span>
+            <span class="icon-bar"></span>
+            <span class="icon-bar"></span>
+          </button>
+        </div>
+        <div id="navbar" class="navbar-collapse collapse">
+          
+          <span class="navbar-form pull-left"><label for="location">Location</label> <select id="location" class="form-control"><option value="No Location">No Location</option></select></span>
+          <p class="navbar-text"><script>document.write(formatAMPM());</script> | <span id="clock"></span></p>
+          <div class="navbar-right">
+            <button type="button" class="btn btn-warning btn-lg navbar-btn" id="refreshPage"><span class="glyphicon glyphicon-refresh" aria-hidden="true"></span></button>&nbsp;&nbsp;
+            <button type="button" class="btn btn-default btn-lg navbar-btn" data-toggle="modal" data-target="#settingsModal"><span class="glyphicon glyphicon-cog" aria-hidden="true"></span></button>
+          </div>
+        </div><!--/.nav-collapse -->
+      </div>
+    </nav>
+    <nav class="navbar navbar-default">
+      <div class="container">
+        <div class="navbar-collapse collapse">
+          <p class="navbar-text">Driver <span class="alert alert-info" id="driverIDdisplay"><strong>Not Selected</strong></span></p>
+          <p class="navbar-text">Bus <span class="alert alert-info" id="busIDdisplay"><strong>Not Selected</strong></span></p>
+          <p class="navbar-text">Route <span class="alert alert-info" id="routeIDdisplay"><strong>Not Selected</strong></span></p>
+        </div><!-- /.navbar-collapse -->
+      </div><!-- /.container-fluid -->
+    </nav>
+    <div class="container" role="main">
+      <div id="messages"></div>
+      
+        <input type="hidden" name="driverID" id="driverID" value="">
+        <input type="hidden" name="routeID" id="routeID" value="">
+        <input type="hidden" name="busID" id="busID" value="">
+        <input type="hidden" name="stopID" id="stopID" value="">
+        <input type="hidden" name="latitude" id="latitude" value="">
+        <input type="hidden" name="longitude" id="longitude" value="">
+        <div class="row">
+          <div class="form-group col-sm-3 bg-warning bg-transit">
+            <label for="passAdult">Pass Adult</label>
+            <input id="passAdult" type="text" name="passAdult" value="0" class="form-control input-lg touchspin">
+          </div>
+          <div class="form-group col-sm-3 bg-warning bg-transit">
+            <label for="passYouth">Pass Youth</label>
+            <input id="passYouth" type="text" name="passYouth" value="0" class="form-control input-lg touchspin">
+          </div>
+          <div class="form-group col-sm-3 bg-warning bg-transit">
+            <label for="passReduced">Pass Reduced</label>
+            <input id="passReduced" type="text" name="passReduced" value="0" class="form-control input-lg touchspin">
+          </div>
+
+          <div class="form-group col-sm-3 bg-transit bg-danger">
+            <label for="passengerExited">Exited</label>
+            <input id="passengerExited" type="text" name="passengerExited" value="0" class="form-control input-lg touchspin">
+          </div>
+        </div>
+        <div class="row">
+          <div class="form-group col-sm-3 bg-success bg-transit">
+            <label for="cashAdult">Cash Adult</label>
+            <input id="cashAdult" type="text" name="cashAdult" value="0" class="form-control input-lg touchspin">
+          </div>
+          <div class="form-group col-sm-3 bg-success bg-transit">
+            <label for="cashYouth">Cash Youth</label>
+            <input id="cashYouth" type="text" name="cashYouth" value="0" class="form-control input-lg touchspin">
+          </div>
+          <div class="form-group col-sm-3 bg-success bg-transit">
+            <label for="cashReduced">Cash Reduced</label>
+            <input id="cashReduced" type="text" name="cashReduced" value="0" class="form-control input-lg touchspin">
+          </div>
+          <div class="form-group col-sm-3">
+            <label for="transfer">Transfer</label>
+            <input id="transfer" type="text" name="transfer" value="0" class="form-control input-lg touchspin">
+          </div>
+        </div>
+        <div class="row ">
+          
+          <div class="form-group col-sm-3 bg-info bg-transit">
+            <label for="ticketAdult">Ticket Adult</label>
+            <input id="ticketAdult" type="text" name="ticketAdult" value="0" class="form-control input-lg touchspin">
+          </div>
+          <div class="form-group col-sm-3 bg-info bg-transit">
+            <label for="ticketYouth">Ticket Youth</label>
+            <input id="ticketYouth" type="text" name="ticketYouth" value="0" class="form-control input-lg touchspin">
+          </div>
+          <div class="form-group col-sm-3 bg-info bg-transit hide">
+            <label for="ticketReduced">Ticket Reduced</label>
+            <input id="ticketReduced" type="text" name="ticketReduced" value="0" class="form-control input-lg touchspin">
+          </div>
+          <div class="form-group col-sm-3 col-sm-offset-3">
+            <label for="totalRidersView">Total Riders</label>
+            <input id="totalRidersView" type="text" name="totalRidersView" value="0" class="form-control input-lg" disabled>
+            <input id="totalRiders" type="hidden" name="totalRiders" value="0" class="form-control input-lg">
+          </div>
+        </div>
+        <hr/>
+        <div class="row">
+          <div class="form-group col-sm-2">
+            <a href="#" class="btn btn-default" id="bicycle"><span class="icon icon-bicycle"></span> &nbsp;</a>
+            <input id="bike" type="hidden" name="bike" value="0">
+          </div>
+          <div class="form-group col-sm-2">
+            <a href="#" class="btn btn-default" id="btn-wheelchair"><span class="icon icon-accessibility"></span></a>
+            <input id="wheelchair" type="hidden" name="wheelchair" value="0">
+          </div>
+          <div class="form-group col-sm-2">
+            <a href="#" class="btn btn-default" id="btn-stroller"><span class="icon icon-i-took-my-son-to-the-cart"></span></a>
+            <input id="stroller" type="hidden" name="stroller" value="0">
+          </div>
+          <div class="form-group col-sm-2">
+            <a href="#" class="btn btn-default" id="btn-walker"><span class="icon icon-walking21"></span></a>
+            <input id="walker" type="hidden" name="walker" value="0">
+          </div>
+          <div class="form-group col-sm-2">
+            <a href="#" class="btn btn-default" id="btn-serviceAnimal"><span class="icon icon-guidedog"></span></a>
+            <input id="serviceAnimal" type="hidden" name="serviceAnimal" value="0">
+          </div>
+          <div class="form-group col-sm-2">
+            <a href="#" class="btn btn-default" id="btn-child"><span class="icon icon-child"></span></a>
+            <input id="child" type="hidden" name="child" value="0">
+          </div>
+        </div>
+<!--
+        <a href="#" class="btn btn-danger btn-lg do-nothing"><span class="glyphicon glyphicon-plus" aria-hidden="true"></span> Medical</a>
+        <a href="#" class="btn btn-primary btn-lg do-nothing"><span class="glyphicon glyphicon-alert" aria-hidden="true"></span> Police</a>
+-->
+<!--
+        <a href="map.html" class="btn btn-default btn-lg" id="mapLink"><span class="glyphicon glyphicon-map-marker" aria-hidden="true"></span> Map</a>
+        <a href="#" class="btn btn-default btn-lg" id="schedLink"><span class="glyphicon glyphicon-list" aria-hidden="true"></span> Schedule</a>
+-->
+        <button type="submit" class="btn btn-lg btn-block btn-success pull-right">Submit</button>
+      </form>
+      
+      <div class="debug-container">
+        <h5>DEBUG Information</h5>
+        <div id="debug"></div>
+      </div>
+      <!-- Modal -->
+      <div class="modal fade" id="settingsModal" tabindex="-1" role="dialog" aria-labelledby="settingsModalLabel">
+        <div class="modal-dialog" role="document">
+          <div class="modal-content">
+            <div class="modal-header">
+              <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+              <h4 class="modal-title" id="myModalLabel">Settings</h4>
+            </div>
+            <div class="modal-body">
+              <form id="settings">
+                <div class="form-group">
+                  <label for="settingDriverID">Driver</label>
+                  <select class="form-control" name="settingDriverID" id="settingDriverID">
+                    <option>ERROR</option>
+                  </select>
+                </div>
+                <div class="form-group">
+                  <label for="settingBusID">Bus Number</label>
+                  <select class="form-control" name="settingBusID" id="settingBusID">
+                    <option>ERROR</option>
+                  </select>
+                </div>
+                <div class="form-group">
+                  <label for="settingRouteID">Route</label>
+                  <select class="form-control" name="settingRouteID" id="settingRouteID">
+                    <option>ERROR</option>
+                  </select>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-danger btn-lg pull-left" id="clearSettings">Logout</button>
+                <button type="button" class="btn btn-default btn-lg" data-dismiss="modal">Close</button>
+                <button type="submit" class="btn btn-primary btn-lg">Save changes</button>
+              </form>
+            </div>
+          </div>
+        </div>
+      </div>
+      
+    </div> <!-- /container -->
+    <!-- jQuery (necessary for Bootstrap's JavaScript plugins) -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/2.1.3/jquery.min.js"></script>
+    <!-- Include all compiled plugins (below), or include individual files as needed -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/3.3.4/js/bootstrap.min.js"></script>
+    <script src="./js/vendor/jquery.bootstrap-touchspin.min.js"></script>
+    <script>
+      function updateClock ( ) {
+        var currentTime = new Date ( );
+        var currentHours = currentTime.getHours ( );
+        var currentMinutes = currentTime.getMinutes ( );
+        var currentSeconds = currentTime.getSeconds ( );
+        
+        // Pad the minutes and seconds with leading zeros, if required
+        currentMinutes = ( currentMinutes < 10 ? "0" : "" ) + currentMinutes;
+        currentSeconds = ( currentSeconds < 10 ? "0" : "" ) + currentSeconds;
+        
+        // Choose either "AM" or "PM" as appropriate
+        var timeOfDay = ( currentHours < 12 ) ? "AM" : "PM";
+        
+        // Convert the hours component to 12-hour format if needed
+        currentHours = ( currentHours > 12 ) ? currentHours - 12 : currentHours;
+        
+        // Convert an hours component of "0" to "12"
+        currentHours = ( currentHours == 0 ) ? 12 : currentHours;
+        
+        // Compose the string for display
+        var currentTimeString = currentHours + ":" + currentMinutes + ":" + currentSeconds + " " + timeOfDay;
+        
+        
+        $("#clock").html(currentTimeString);
+        	
+      }
+      
+      
+      $(document).ready(function(){
+        setInterval('updateClock()', 1000);
+        $(".touchspin").TouchSpin();
+        $('#cashAdult,#cashYouth,#cashReduced,#child,#ticketAdult,#ticketYouth,#ticketReduced,#transfer,#passAdult,#passYouth,#passReduced,#passengerExited').change(function() { 
+          var audio = document.getElementById("clickSound");
+          audio.play();
+        });
+        //update costs on key input
+        $('#cashAdult,#cashYouth,#cashReduced,#child,#ticketAdult,#ticketYouth,#ticketReduced,#transfer,#passAdult,#passYouth,#passReduced').change(function() {  
+          updateTotal();
+        });
+        
+        var updateTotal = function () {
+          var input1 = (isNaN(input1 = parseInt($("#cashAdult").val(), 10)) ? 0 : input1);
+          var input2 = (isNaN(input2 = parseInt($("#cashYouth").val(), 10)) ? 0 : input2);
+          var input3 = (isNaN(input3 = parseInt($("#cashReduced").val(), 10)) ? 0 : input3);
+          var input4 = (isNaN(input4 = parseInt($("#child").val(), 10)) ? 0 : input4);
+          var input5 = (isNaN(input5 = parseInt($("#ticketAdult").val(), 10)) ? 0 : input5);
+          var input6 = (isNaN(input6 = parseInt($("#ticketYouth").val(), 10)) ? 0 : input6);
+          var input7 = (isNaN(input7 = parseInt($("#ticketReduced").val(), 10)) ? 0 : input7);
+          var input8 = (isNaN(input8 = parseInt($("#transfer").val(), 10)) ? 0 : input8);
+          var input9 = (isNaN(input9 = parseInt($("#passAdult").val(), 10)) ? 0 : input9);
+          var input10 = (isNaN(input10 = parseInt($("#passYouth").val(), 10)) ? 0 : input10);
+          var input11 = (isNaN(input11 = parseInt($("#passReduced").val(), 10)) ? 0 : input11);
+      
+          $('#totalRiders').val(input1 + input2 + input3 + input4 + input5 +input6 + input7 + input8 + input9 + input10 + input11);
+          $('#totalRidersView').val(input1 + input2 + input3 + input4 + input5 +input6 + input7 + input8 + input9 + input10 + input11);
+      
+        };
+        
+        //update cost on load
+        updateTotal();
+        
+        //toggle value for attributes
+        $("#bicycle").on('click',function(e){
+          e.preventDefault();
+          $(this).toggleClass("btn-danger");
+          $(this).toggleClass("btn-default");
+          if($("#bike").val() == 0){
+            $("#bike").val("1");
+          }else{
+            $("#bike").val("0");
+          }
+        });
+        
+        $("#btn-wheelchair").on('click',function(e){
+          e.preventDefault();
+          $(this).toggleClass("btn-danger");
+          $(this).toggleClass("btn-default");
+          if($("#wheelchair").val() == 0){
+            $("#wheelchair").val("1");
+          }else{
+            $("#wheelchair").val("0");
+          }
+        });
+        
+        
+        $("#btn-stroller").on('click',function(e){
+          e.preventDefault();
+          $(this).toggleClass("btn-danger");
+          $(this).toggleClass("btn-default");
+          if($("#stroller").val() == 0){
+            $("#stroller").val("1");
+          }else{
+            $("#stroller").val("0");
+          }
+        });
+        
+        $("#btn-walker").on('click',function(e){
+          e.preventDefault();
+          $(this).toggleClass("btn-danger");
+          $(this).toggleClass("btn-default");
+          if($("#walker").val() == 0){
+            $("#walker").val("1");
+          }else{
+            $("#walker").val("0");
+          }
+        });
+        
+        $("#btn-serviceAnimal").on('click',function(e){
+          e.preventDefault();
+          $(this).toggleClass("btn-danger");
+          $(this).toggleClass("btn-default");
+          if($("#serviceAnimal").val() == 0){
+            $("#serviceAnimal").val("1");
+          }else{
+            $("#serviceAnimal").val("0");
+          }
+        });
+        
+        $("#btn-child").on('click',function(e){
+          e.preventDefault();
+          $(this).toggleClass("btn-danger");
+          $(this).toggleClass("btn-default");
+          if($("#child").val() == 0){
+            $("#child").val("1");
+          }else{
+            $("#child").val("0");
+          }
+        });
+        
+
+      });
+    </script>
+  </body>
+</html>
