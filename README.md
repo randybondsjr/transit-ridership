@@ -65,7 +65,7 @@ This project is to create a form (no map) to be used on to record ridership numb
 	* route_color ( type: esriFieldTypeString , alias: route_ , length: 10 )
 	* route_text_color ( type: esriFieldTypeString , alias: route_text_color , length: 10 )
 6. For the sake of data integrity, you may want to secure your service. It's recommended to seperate the Ridership Statistics and Driver Feature Layers into their own secured service. Once secured, the app will present a login dialogue. 
-7. Share the Classes and Tables as Services, making sure that you have 
+7. Share the Classes and Tables as Services, making sure that you have Feature Access chosen for the editable Service.
 
 ###Place the files 
 1. Download all the files in this repository to the folder on your webserver where you wish to host the app. It is recommended that you have a SSL service if you are securing your Feature Service so that your login is encrypted.
@@ -105,3 +105,4 @@ Contributions are welcome, create an [issue](https://github.com/randybondsjr/tra
 ##Attribution
 * [Fontello](https://github.com/fontello/fontello) (Icon Fonts)
 * [Bootstrap Touchspin](https://github.com/istvan-ujjmeszaros/bootstrap-touchspin)
+* [Tom Sellsted](https://github.com/orgs/CityofYakima/people/tsellste) Co-Author
