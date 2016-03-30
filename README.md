@@ -1,6 +1,8 @@
 # Transit Ridership Counter
 This project is to create a form (no map) to be used on to record ridership numbers for a transit system. It writes a point to a Feature Service with the entered attributes. Originally designed for the City of Yakima, it can be used anywhere after some minor setup. 
 
+![Transit Ridership Screenshot](https://raw.githubusercontent.com/randybondsjr/transit-ridership/master/screenshot.png)
+
 ##Requirements
 1. ArcGIS Server (you will need to host 5 REST services)
 2. Web Server (to host the application)
@@ -8,7 +10,7 @@ This project is to create a form (no map) to be used on to record ridership numb
 
 ## Installation
 ### Create the Services
-1. Create a Feature Layer (Point) called **Ridership Statistics** with the following fields
+1. Create a Feature Class (Point) called **Ridership Statistics** with the following fields
 	* StopName ( type: esriFieldTypeString , alias: StopName , length: 50 )
 	* RouteNumber ( type: esriFieldTypeString , alias: Route Number , length: 50 , Coded Values: [1: 1 - Summitview / Lincoln] , [2: 2 - Tieton / Nob Hill] , [3: 3 - Mead / Fruitvale] , ...7 more... )
 	* BusID ( type: esriFieldTypeString , alias: BusID , length: 10 )
@@ -40,7 +42,7 @@ This project is to create a form (no map) to be used on to record ridership numb
 	* EmployeeID ( type: esriFieldTypeString , alias: EmployeeID , length: 10 )
 3. Create a Table called **Bus Status** with the following field: [Example Service](https://gis.yakimawa.gov/arcgis101/rest/services/Transit/BusStatus/MapServer/0) 
 	* UnitID ( type: esriFieldTypeString , alias: UnitID , length: 10 )
-4. Create a Feature Layer (Point) called **All Stops** with the following fields: [Example Service](https://gis.yakimawa.gov/arcgis101/rest/services/Transit/TransitRoutes/MapServer/18)
+4. Create a Feature Class (Point) called **All Stops** with the following fields: [Example Service](https://gis.yakimawa.gov/arcgis101/rest/services/Transit/TransitRoutes/MapServer/18)
 	* DIR ( type: esriFieldTypeString , alias: DIR , length: 2 )
 	* POLETYPE ( type: esriFieldTypeString , alias: POLETYPE , length: 4 )
 	* LOCATION ( type: esriFieldTypeString , alias: LOCATION , length: 25 )
@@ -63,6 +65,7 @@ This project is to create a form (no map) to be used on to record ridership numb
 	* route_color ( type: esriFieldTypeString , alias: route_ , length: 10 )
 	* route_text_color ( type: esriFieldTypeString , alias: route_text_color , length: 10 )
 6. For the sake of data integrity, you may want to secure your service. It's recommended to seperate the Ridership Statistics and Driver Feature Layers into their own secured service. Once secured, the app will present a login dialogue. 
+7. Share the Classes and Tables as Services, making sure that you have 
 
 ###Place the files 
 1. Download all the files in this repository to the folder on your webserver where you wish to host the app. It is recommended that you have a SSL service if you are securing your Feature Service so that your login is encrypted.
