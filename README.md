@@ -10,6 +10,8 @@ This project is to create a form (no map) to be used on to record ridership numb
 
 ## Installation
 ### Create the Services
+In the root of this repository there is a zip file called `sample gdb.zip` that has all of the structure for all of these classes and tables. You can import these into your setup to get started and skip this step. (Don't forget to create the REST services!)
+
 1. Create a Feature Class (Point) called **Ridership Statistics** with the following fields
 	* StopName ( type: esriFieldTypeString , alias: StopName , length: 50 )
 	* RouteNumber ( type: esriFieldTypeString , alias: Route Number , length: 50 , Coded Values: [1: 1 - Summitview / Lincoln] , [2: 2 - Tieton / Nob Hill] , [3: 3 - Mead / Fruitvale] , ...7 more... )
