@@ -1,4 +1,36 @@
-require(["dojo/dom", "dojo/on", "dojo/ready", "dojo/_base/array", "dojo/_base/unload", "dojo/cookie", "dojo/json", "esri/tasks/query", "esri/tasks/QueryTask", "esri/geometry/Point", "esri/geometry/webMercatorUtils", "esri/geometry/Polyline", "esri/geometry/geometryEngine", "esri/SpatialReference", "esri/layers/FeatureLayer", "esri/IdentityManager", "dojo/domReady!"], function(dom, on, ready, arrayUtil, baseUnload, cookie, JSON, Query, QueryTask, Point, webMercatorUtils, Polyline, geometryEngine, SpatialReference, FeatureLayer, esriId) {
+require(["dojo/dom", 
+        "dojo/on", 
+        "dojo/ready", 
+        "dojo/_base/array", 
+        "dojo/_base/unload", 
+        "dojo/cookie", 
+        "dojo/json", 
+        "esri/tasks/query", 
+        "esri/tasks/QueryTask", 
+        "esri/geometry/Point", 
+        "esri/geometry/webMercatorUtils", 
+        "esri/geometry/Polyline", 
+        "esri/geometry/geometryEngine", 
+        "esri/SpatialReference", 
+        "esri/layers/FeatureLayer", 
+        "esri/IdentityManager", 
+        "dojo/domReady!"], 
+        function(dom, 
+                 on, 
+                 ready, 
+                 arrayUtil, 
+                 baseUnload, 
+                 cookie, 
+                 JSON, 
+                 Query, 
+                 QueryTask, 
+                 Point, 
+                 webMercatorUtils, 
+                 Polyline, 
+                 geometryEngine, 
+                 SpatialReference, 
+                 FeatureLayer, 
+                 esriId) {
     ready(function() {
         var stops;
         var closestPT;
@@ -6,8 +38,15 @@ require(["dojo/dom", "dojo/on", "dojo/ready", "dojo/_base/array", "dojo/_base/un
         var filteredStops;
         var cred = "esri_jsapi_id_manager_data"; // cookie/local storage name
         var positions = new Array();
+        var bufferPositions = new Array();
+        var bufferLength = 0;
         var distanceTraveled = 0;
-
+        //add a layer to the dom
+        var featureLayer = new FeatureLayer("https://gis.yakimawa.gov/arcgis101/rest/services/Transit/Ridership/FeatureServer/0", {
+            mode: FeatureLayer.MODE_SNAPSHOT,
+            outFields: ["*"]
+        });
+        
         findBuses();
         findRoutes();
         findDrivers();
@@ -23,7 +62,7 @@ require(["dojo/dom", "dojo/on", "dojo/ready", "dojo/_base/array", "dojo/_base/un
         //baseUnload.addOnUnload(storeCredentials);
         // look for credentials in local storage
         loadCredentials();
-
+        
         function loadCredentials() {
             console.log("Loading Credentials...");
             var idJson, idObject;
@@ -75,7 +114,8 @@ require(["dojo/dom", "dojo/on", "dojo/ready", "dojo/_base/array", "dojo/_base/un
         }
 
         function findDrivers() {
-            var driverQuery = new QueryTask("YOUR DRIVER SERVICE URL");
+            //ADD DRIVERS https://gis.yakimawa.gov/arcgis101/rest/services/Transit/Ridership/FeatureServer/1/
+            var driverQuery = new QueryTask("https://gis.yakimawa.gov/arcgis101/rest/services/Transit/Ridership/FeatureServer/1/");
             var query = new Query();
             query.returnGeometry = false;
             query.outFields = ["*"];
@@ -96,8 +136,8 @@ require(["dojo/dom", "dojo/on", "dojo/ready", "dojo/_base/array", "dojo/_base/un
         }
 
         function findBuses() {
-            //ADD BUSES 
-            var busQuery = new QueryTask("YOUR BUS SERVICE URL");
+            //ADD BUSES https://gis.yakimawa.gov/arcgis101/rest/services/Transit/BusStatus/MapServer/0/
+            var busQuery = new QueryTask("https://gis.yakimawa.gov/arcgis101/rest/services/AVL/CityAVL/MapServer/3/");
             var query = new Query();
             query.returnGeometry = false;
             query.outFields = ["UnitID"];
@@ -118,8 +158,8 @@ require(["dojo/dom", "dojo/on", "dojo/ready", "dojo/_base/array", "dojo/_base/un
         }
 
         function findStops() {
-            //ADD STOPS 
-            var stopsQuery = new QueryTask("YOUR STOPS URL");
+            //ADD STOPS https://gis.yakimawa.gov/arcgis101/rest/services/Transit/TransitRoutes/MapServer/4
+            var stopsQuery = new QueryTask("https://gis.yakimawa.gov/arcgis101/rest/services/Transit/TransitRoutes/MapServer/18");
             var query = new Query();
             query.returnGeometry = true;
             query.outFields = ["LOCATION", "ROUTES"];
@@ -179,8 +219,8 @@ require(["dojo/dom", "dojo/on", "dojo/ready", "dojo/_base/array", "dojo/_base/un
         }
 
         function findRoutes() {
-            //ADD ROUTES 
-            var routesQuery = new QueryTask("YOUR ROUTE URL");
+            //ADD ROUTES https://gis.yakimawa.gov/arcgis101/rest/services/Transit/RoutesStopsData/MapServer/6/
+            var routesQuery = new QueryTask("https://gis.yakimawa.gov/arcgis101/rest/services/Transit/RoutesStopsData/MapServer/6/");
             var query = new Query();
             query.returnGeometry = false;
             query.outFields = ["route_id", "route_long_name"];
@@ -226,8 +266,24 @@ require(["dojo/dom", "dojo/on", "dojo/ready", "dojo/_base/array", "dojo/_base/un
         function gpsSuccess(position) {
             $("#latitude").val(position.coords.latitude);
             $("#longitude").val(position.coords.longitude);
-            if (position.coords.accuracy < 200) {
-                positions.push([position.coords.longitude, position.coords.latitude]);
+            bufferPositions.push([position.coords.longitude,position.coords.latitude]);
+
+            if(typeof positions[0] === 'undefined'){ // first point
+              positions.push([position.coords.longitude,position.coords.latitude]);
+            }
+            
+            if(bufferPositions.length === 2){ //if buffer array is two, let's measure it 
+              console.log(bufferPositions);
+              var bufferPolyLine = new Polyline(bufferPositions);
+              bufferLength = geometryEngine.geodesicLength(bufferPolyLine, "meters");
+              console.log("Buffer Length: " + bufferLength);
+              if (bufferLength > position.coords.accuracy){
+                bufferPositions.shift(); // shift array to remove first item, making second point new "anchor"
+                positions.push([position.coords.longitude,position.coords.latitude]); // add point to main positions, it's outside of accuracy buffer
+              }else{
+                bufferPositions.pop(); // remove last item in array, it's garbage
+              }
+              
             }
             var gpsPT = Point(position.coords.longitude, position.coords.latitude, new SpatialReference(4326));
             var pt = webMercatorUtils.geographicToWebMercator(gpsPT);
@@ -241,15 +297,15 @@ require(["dojo/dom", "dojo/on", "dojo/ready", "dojo/_base/array", "dojo/_base/un
                     distance = d;
                 }
             });
-
-
-            if (positions.length > 0) {
-                var singlePathPolyline = new Polyline(positions);
-                distanceTraveled = geometryEngine.geodesicLength(singlePathPolyline, "miles");
+            
+            
+            if(positions.length > 0){
+              var singlePathPolyline = new Polyline(positions);
+              distanceTraveled = geometryEngine.geodesicLength(singlePathPolyline, "miles");
             }
-
-            $("#debug").html(position.coords.latitude + ", " + position.coords.longitude + " - distance: " + distance + " - accuracy: " + position.coords.accuracy + "<br/> Traveled: " + distanceTraveled);
-
+            
+            $("#debug").html(position.coords.latitude + ", " + position.coords.longitude + " - distance: " + distance + " - accuracy: " + position.coords.accuracy + "<br/> Traveled: " + distanceTraveled +" - Version 2.01");
+            
             if (closestPT != undefined) {
                 $("#location option[value='" + closestPT.attributes.LOCATION + "']").prop("selected", true);
                 updateLocationDisplay(filteredStops);
@@ -258,7 +314,7 @@ require(["dojo/dom", "dojo/on", "dojo/ready", "dojo/_base/array", "dojo/_base/un
         }
 
         function gpsError() {
-            $("#debug").append("<br/> GPS ERROR Unable to retrieve your location");
+          $("#debug").append("<br/> GPS ERROR Unable to retrieve your location");
         }
 
         function clearAllSettings() {
@@ -323,12 +379,13 @@ require(["dojo/dom", "dojo/on", "dojo/ready", "dojo/_base/array", "dojo/_base/un
             e.preventDefault();
             var fields = $("#transitRidership").serializeArray();
             if (!positions.length > 0) {
-                var error = document.getElementById("errorSound");
-                error.play();
+              var error = document.getElementById("errorSound");
+              error.play();
+              console.log("no Positions");
             }
             var singlePathPolyline = new Polyline(positions);
             var distanceTraveled = geometryEngine.geodesicLength(singlePathPolyline, "miles");
-
+            console.log(fields);
             //FIELDS just to improve readability
             driverID = fields[0].value;
             routeID = fields[1].value;
@@ -336,35 +393,31 @@ require(["dojo/dom", "dojo/on", "dojo/ready", "dojo/_base/array", "dojo/_base/un
             stopID = fields[3].value;
             latitude = fields[4].value;
             longitude = fields[5].value;
-            cashAdult = fields[6].value;
-            cashYouth = fields[7].value;
-            cashReduced = fields[8].value;
-            child = fields[9].value;
-            ticketAdult = fields[10].value;
-            ticketYouth = fields[11].value;
-            ticketReduced = fields[12].value;
+            passAdult = fields[6].value;
+            passYouth = fields[7].value;
+            passReduced = fields[8].value;
+            passengerExited = fields[9].value;
+            cashAdult = fields[10].value;
+            cashYouth = fields[11].value;
+            cashReduced = fields[12].value;
             transfer = fields[13].value;
-            passAdult = fields[14].value;
-            passYouth = fields[15].value;
-            passReduced = fields[16].value;
+            ticketAdult = fields[14].value;
+            ticketYouth = fields[15].value;
+            ticketReduced = fields[16].value;
             totalRiders = fields[17].value;
             bike = fields[18].value;
             wheelchair = fields[19].value;
             stroller = fields[20].value;
             walker = fields[21].value;
             serviceAnimal = fields[22].value;
-            passengerExited = fields[23].value;
-            localDateTime = new Date().toISOString().slice(0, 19).replace('T', ' ');
-
-            //add a layer to the dom
-            var featureLayer = new FeatureLayer("YOUR RIDERSHIP URL", {
-                mode: FeatureLayer.MODE_SNAPSHOT,
-                outFields: ["*"]
-            });
-
+            child = fields[23].value;
+            //localDateTime = new Date().toISOString().slice(0, 19).replace('T', ' ');
+            localDateTime = (new Date ((new Date((new Date(new Date())).toISOString() )).getTime() - ((new Date()).getTimezoneOffset()*60000))).toISOString().slice(0, 19).replace('T', ' ');
+            //console.log(localDateTime);
+            
             if (closestPT !== undefined) {
-                var bell = document.getElementById("bellSound");
-                bell.play();
+              var bell = document.getElementById("bellSound");
+              bell.play();
                 var attributes = {
                     "StopName": stopID,
                     "RouteNumber": routeID,
@@ -390,7 +443,8 @@ require(["dojo/dom", "dojo/on", "dojo/ready", "dojo/_base/array", "dojo/_base/un
                     "PassengersExitedCount": passengerExited,
                     "Latitude": latitude,
                     "Longitude": longitude,
-                    "DistanceTraveled": distanceTraveled
+                    "DistanceTraveled": distanceTraveled,
+                    "TotalRiders": totalRiders
                 };
                 var addGraphic = new esri.Graphic(closestPT.geometry, null, attributes, null);
 
@@ -406,13 +460,13 @@ require(["dojo/dom", "dojo/on", "dojo/ready", "dojo/_base/array", "dojo/_base/un
                         distanceTraveled = 0;
                         positions = [];
                         $("#debug").html(position.coords.latitude + ", " + position.coords.longitude + " - distance: " + distance + " - accuracy: " + position.coords.accuracy + "<br/> Traveled: " + distanceTraveled);
-                    }, 3000);
+                      }, 3000);
                 }, function(errback) {
                     $("#messages").html("<div class=\"alert alert-danger\"><h4>ERROR!</h4> Record Cannot be Recorded!</div>");
                 });
             } else {
-                var error = document.getElementById("errorSound");
-                error.play();
+              var error = document.getElementById("errorSound");
+              error.play();
             }
 
         });
@@ -423,12 +477,12 @@ require(["dojo/dom", "dojo/on", "dojo/ready", "dojo/_base/array", "dojo/_base/un
         });
 
         esriId.on('dialog-create', function() {
-            $('#dijit_form_ValidationTextBox_0').val('DOMAIN\\');
+            $('#dijit_form_ValidationTextBox_0').val('yakima_city\\');
             $('.dijitDialogPaneContentArea div:first').html('');
         });
 
         esriId.on('credential-create', storeCredentials);
-
+        
         $('#refreshPage').on("click", function() {
             window.location.reload(true);
         });
